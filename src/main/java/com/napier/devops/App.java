@@ -1,4 +1,4 @@
-package com.napier.sem;
+package com.napier.devops;
 
 import java.sql.*;
 
