@@ -1,4 +1,4 @@
 FROM openjdk:latest
-COPY ./target/DevOps_Labs-0.1.0.2-SNAPSHOT-jar-with-dependencies.jar /tmp
+COPY ./target/DevOps_Labs-1.0-SNAPSHOT-jar-with-dependencies.jar /tmp
 WORKDIR /tmp
-ENTRYPOINT ["java", "-jar", "DevOps_Labs-0.1.0.2-SNAPSHOT-jar-with-dependencies.jar"]
+ENTRYPOINT ["java", "-jar", "DevOps_Labs-1.0-SNAPSHOT-jar-with-dependencies.jar"]
