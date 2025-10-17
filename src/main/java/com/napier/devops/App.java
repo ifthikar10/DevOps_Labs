@@ -16,10 +16,10 @@ public class App
         // Get a collection from the database
         MongoCollection<Document> collection = database.getCollection("test");
         // Create a document to store
-        Document doc = new Document("name", "Ifthikar Aboobakker")
+        Document doc = new Document("name", "ifthikar")
                 .append("class", "DevOps")
                 .append("year", "2025")
-                .append("result", new Document("CW", 90).append("EX", 88));
+                .append("result", new Document("CW", 95).append("EX", 85));
         // Add document to collection
         collection.insertOne(doc);
 
