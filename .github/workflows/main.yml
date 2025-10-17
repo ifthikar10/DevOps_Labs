@@ -21,8 +21,8 @@ jobs:
       - name: Build with Maven
         run: mvn package
       - name: Build
-        run: docker build -t DevOps_Labs .
+        run: docker build -t MongoDB-Jar .
       - name: Run image
-        run: docker run --network DevOps_Labs --name devopscontainer DevOps_Labs
+        run: docker run --network DevOps_Labs --name devopscontainer MongoDB-Jar
       - name: view logs
         run: docker logs devopscontainer
