@@ -15,14 +15,14 @@ jobs:
           distribution: 'adopt'
       - name: Setup network
         run: |
-          docker network create --driver bridge DevOps_Labs
+          docker network create --driver bridge devops_labs_mongodb
           docker pull mongo
-          docker run -d --name mongo-dbserver --network DevOps_Labs mongo
+          docker run -d --name mongo-dbserver --network devops_labs_mongodb mongo
       - name: Build with Maven
         run: mvn package
       - name: Build
         run: docker build -t mongo-myapp-container .
       - name: Run image
-        run: docker run --network DevOps_Labs --name devopscontainer mongo-myapp-container
+        run: docker run --network devops_labs_mongodb --name devopscontainer mongo-myapp-container
       - name: view logs
         run: docker logs devopscontainer
