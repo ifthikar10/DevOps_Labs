@@ -1,4 +1,4 @@
-FROM openjdk:latest
-COPY ./target/DevOps_Labs-0.1.0.2-jar-with-dependencies.jar /tmp
+FROM eclipse-temurin:17-jdk
+COPY ./target/DevOps_Labs-1.1-SNAPSHOT-jar-with-dependencies.jar /tmp
 WORKDIR /tmp
-ENTRYPOINT ["java", "-jar", "DevOps_Labs-0.1.0.2-jar-with-dependencies.jar"]
+ENTRYPOINT ["java", "-jar", "DevOps_Labs-1.1-SNAPSHOT-jar-with-dependencies.jar"]
