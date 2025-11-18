@@ -1,5 +1,7 @@
 package com.napier.devops;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class App
 {
@@ -27,6 +29,9 @@ public class App
         a.salaryReportAll();
 
         a.salaryReportByDepartment("Sales");
+
+        // Test salary report for manager
+        a.salaryReportForManager(110039);
 
         // Disconnect from database
         a.disconnect();
@@ -151,6 +156,72 @@ public class App
         }
     }
 
+    /**
+     * Return list of dept_no that the given emp_no currently manages.
+     */
+    public List<String> getDepartmentsForManager(int managerEmpNo) {
+        List<String> depts = new ArrayList<>();
+        String sql = "SELECT dept_no FROM dept_manager WHERE emp_no = ? AND to_date = '9999-01-01'";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, managerEmpNo);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    depts.add(rs.getString("dept_no"));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to get departments for manager " + managerEmpNo + ": " + e.getMessage());
+        }
+        return depts;
+    }
+
+    /**
+     * Salary report for the department(s) managed by the given manager (emp_no).
+     */
+    public void salaryReportForManager(int managerEmpNo) {
+        List<String> depts = getDepartmentsForManager(managerEmpNo);
+        if (depts.isEmpty()) {
+            System.out.println("No current department manager assignments found for emp_no: " + managerEmpNo);
+            return;
+        }
+
+        // Build parameterized IN clause
+        StringBuilder inClause = new StringBuilder();
+        for (int i = 0; i < depts.size(); ++i) {
+            inClause.append("?");
+            if (i < depts.size() - 1) inClause.append(",");
+        }
+
+        String sql = "SELECT COUNT(*) AS cnt, " +
+                "AVG(s.salary) AS avg_salary, MIN(s.salary) AS min_salary, " +
+                "MAX(s.salary) AS max_salary, SUM(s.salary) AS total_salary " +
+                "FROM employees e " +
+                "JOIN dept_emp de ON e.emp_no = de.emp_no AND de.to_date = '9999-01-01' " +
+                "JOIN salaries s ON e.emp_no = s.emp_no AND s.to_date = '9999-01-01' " +
+                "WHERE de.dept_no IN (" + inClause.toString() + ")";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            for (int i = 0; i < depts.size(); ++i) {
+                ps.setString(i + 1, depts.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt("cnt") > 0) {
+                    System.out.println("=== Salary Report for Manager (emp_no=" + managerEmpNo + ") Departments " + depts + " ===");
+                    System.out.println("Count  : " + rs.getInt("cnt"));
+                    System.out.printf("Average: %.2f%n", rs.getDouble("avg_salary"));
+                    System.out.println("Min    : " + rs.getInt("min_salary"));
+                    System.out.println("Max    : " + rs.getInt("max_salary"));
+                    System.out.println("Total  : " + rs.getLong("total_salary"));
+                    System.out.println("================================================================");
+                } else {
+                    System.out.println("No current employees found in manager's department(s): " + depts);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to produce manager's department salary report: " + e.getMessage());
+        }
+    }
     /**
      * Connect to the MySQL database.
      */
