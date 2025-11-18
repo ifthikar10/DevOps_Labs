@@ -26,6 +26,8 @@ public class App
 
         a.salaryReportAll();
 
+        a.salaryReportByDepartment("Sales");
+
         // Disconnect from database
         a.disconnect();
     }
