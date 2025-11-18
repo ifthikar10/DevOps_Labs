@@ -112,7 +112,42 @@ public class App
             System.out.println("Failed to produce salary report: " + e.getMessage());
         }
     }
+    /**
+     * Salary report for a named department (deptName)
+     * Example: "Sales"
+     */
+    public void salaryReportByDepartment(String deptName) {
+        String sql =
+                "SELECT COUNT(*) AS cnt, " +
+                        "AVG(s.salary) AS avg_salary, " +
+                        "MIN(s.salary) AS min_salary, " +
+                        "MAX(s.salary) AS max_salary, " +
+                        "SUM(s.salary) AS total_salary " +
+                        "FROM employees e " +
+                        "JOIN dept_emp de ON e.emp_no = de.emp_no AND de.to_date = '9999-01-01' " +
+                        "JOIN departments d ON de.dept_no = d.dept_no " +
+                        "JOIN salaries s ON e.emp_no = s.emp_no AND s.to_date = '9999-01-01' " +
+                        "WHERE d.dept_name = ?";
 
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, deptName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt("cnt") > 0) {
+                    System.out.println("=== Salary Report for Department: " + deptName + " ===");
+                    System.out.println("Count  : " + rs.getInt("cnt"));
+                    System.out.printf("Average: %.2f%n", rs.getDouble("avg_salary"));
+                    System.out.println("Min    : " + rs.getInt("min_salary"));
+                    System.out.println("Max    : " + rs.getInt("max_salary"));
+                    System.out.println("Total  : " + rs.getLong("total_salary"));
+                    System.out.println("===============================================");
+                } else {
+                    System.out.println("No current employees found in department: " + deptName);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to produce department salary report: " + e.getMessage());
+        }
+    }
 
     /**
      * Connect to the MySQL database.
