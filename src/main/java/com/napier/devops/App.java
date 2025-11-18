@@ -35,6 +35,24 @@ public class App
 
         a.salaryReportByRole("Engineer");  // or any real role in your DB
 
+        // pick a new emp_no automatically
+        int newEmpNo = a.getNextEmpNo();
+        Employee newEmp = new Employee();
+        newEmp.emp_no = newEmpNo;
+        newEmp.first_name = "Test";
+        newEmp.last_name = "Employee";
+        newEmp.birth_date = "1995-05-05";   // optional - method supplies default if null
+        newEmp.gender = "F";                // optional
+        newEmp.hire_date = java.time.LocalDate.now().toString();
+
+        boolean added = a.addEmployee(newEmp, "d000", "Junior Engineer", 42000);
+        System.out.println("Add employee result: " + added);
+        if (added) {
+            // verify by reading back
+            Employee got = a.getEmployee(newEmpNo);
+            a.displayEmployee(got);
+        }
+
         // Disconnect from database
         a.disconnect();
     }
@@ -259,6 +277,89 @@ public class App
             System.out.println("Failed to produce role salary report: " + e.getMessage());
         }
     }
+    /**
+     * Get a numeric emp_no candidate (max(emp_no) + 1).
+     * Simple helper to choose a non-colliding emp_no for tests.
+     */
+    public int getNextEmpNo() {
+        String sql = "SELECT MAX(emp_no) AS max_emp FROM employees";
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                int max = rs.getInt("max_emp");
+                return max + 1;
+            } else {
+                // fallback if table empty
+                return 100000;
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to get next emp_no: " + e.getMessage());
+            // pick a safe default
+            return 100000;
+        }
+    }
+
+    /**
+     * Add a new employee and optional title, salary, dept assignment.
+     * Returns true on success, false on failure.
+     *
+     * NOTE: employees table in the classic dataset requires birth_date, gender, hire_date.
+     * This method uses defaults when those fields are null on the Employee object.
+     */
+    public boolean addEmployee(Employee emp, String deptNo, String title, int salary) {
+        String insertEmp = "INSERT INTO employees (emp_no, birth_date, first_name, last_name, gender, hire_date) VALUES (?, ?, ?, ?, ?, ?)";
+        String insertTitle = "INSERT INTO titles (emp_no, title, from_date, to_date) VALUES (?, ?, CURDATE(), '9999-01-01')";
+        String insertSalary = "INSERT INTO salaries (emp_no, salary, from_date, to_date) VALUES (?, ?, CURDATE(), '9999-01-01')";
+        String insertDeptEmp = "INSERT INTO dept_emp (emp_no, dept_no, from_date, to_date) VALUES (?, ?, CURDATE(), '9999-01-01')";
+
+        try {
+            con.setAutoCommit(false);
+
+            try (PreparedStatement ps = con.prepareStatement(insertEmp)) {
+                ps.setInt(1, emp.emp_no);
+                ps.setString(2, emp.birth_date != null ? emp.birth_date : "1990-01-01");
+                ps.setString(3, emp.first_name);
+                ps.setString(4, emp.last_name);
+                ps.setString(5, emp.gender != null ? emp.gender : "M");
+                ps.setString(6, emp.hire_date != null ? emp.hire_date : java.time.LocalDate.now().toString());
+                ps.executeUpdate();
+            }
+
+            if (title != null && !title.isEmpty()) {
+                try (PreparedStatement ps = con.prepareStatement(insertTitle)) {
+                    ps.setInt(1, emp.emp_no);
+                    ps.setString(2, title);
+                    ps.executeUpdate();
+                }
+            }
+
+            if (salary > 0) {
+                try (PreparedStatement ps = con.prepareStatement(insertSalary)) {
+                    ps.setInt(1, emp.emp_no);
+                    ps.setInt(2, salary);
+                    ps.executeUpdate();
+                }
+            }
+
+            if (deptNo != null && !deptNo.isEmpty()) {
+                try (PreparedStatement ps = con.prepareStatement(insertDeptEmp)) {
+                    ps.setInt(1, emp.emp_no);
+                    ps.setString(2, deptNo);
+                    ps.executeUpdate();
+                }
+            }
+
+            con.commit();
+            con.setAutoCommit(true);
+            return true;
+        } catch (SQLException e) {
+            try { con.rollback(); } catch (SQLException ex) { /* ignore */ }
+            System.out.println("Failed to add employee: " + e.getMessage());
+            try { con.setAutoCommit(true); } catch (SQLException ex) {}
+            return false;
+        }
+    }
+
     /**
      * Connect to the MySQL database.
      */
