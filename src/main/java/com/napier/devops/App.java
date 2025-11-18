@@ -24,6 +24,8 @@ public class App
         // Display Result
         a.displayEmployee(emp);
 
+        a.salaryReportAll();
+
         // Disconnect from database
         a.disconnect();
     }
@@ -79,6 +81,38 @@ public class App
                             + "Manager: " + emp.manager + "\n");
         }
     }
+
+    /**
+     * Salary report for all current employees
+     */
+    public void salaryReportAll() {
+        String sql = "SELECT COUNT(*) AS cnt, " +
+                "AVG(salary) AS avg_salary, " +
+                "MIN(salary) AS min_salary, " +
+                "MAX(salary) AS max_salary, " +
+                "SUM(salary) AS total_salary " +
+                "FROM salaries " +
+                "WHERE to_date = '9999-01-01'";
+
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                System.out.println("=== All Employees Salary Report ===");
+                System.out.println("Count  : " + rs.getInt("cnt"));
+                System.out.printf("Average: %.2f%n", rs.getDouble("avg_salary"));
+                System.out.println("Min    : " + rs.getInt("min_salary"));
+                System.out.println("Max    : " + rs.getInt("max_salary"));
+                System.out.println("Total  : " + rs.getLong("total_salary"));
+                System.out.println("===================================");
+            } else {
+                System.out.println("No salary data found.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to produce salary report: " + e.getMessage());
+        }
+    }
+
 
     /**
      * Connect to the MySQL database.
