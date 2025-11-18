@@ -33,6 +33,8 @@ public class App
         // Test salary report for manager
         a.salaryReportForManager(110039);
 
+        a.salaryReportByRole("Engineer");  // or any real role in your DB
+
         // Disconnect from database
         a.disconnect();
     }
@@ -220,6 +222,41 @@ public class App
             }
         } catch (SQLException e) {
             System.out.println("Failed to produce manager's department salary report: " + e.getMessage());
+        }
+    }
+    /**
+     * Salary report for employees of a given role (title)
+     */
+    public void salaryReportByRole(String role) {
+        String sql =
+                "SELECT COUNT(*) AS cnt, " +
+                        "AVG(s.salary) AS avg_salary, " +
+                        "MIN(s.salary) AS min_salary, " +
+                        "MAX(s.salary) AS max_salary, " +
+                        "SUM(s.salary) AS total_salary " +
+                        "FROM employees e " +
+                        "JOIN titles t ON e.emp_no = t.emp_no AND t.to_date = '9999-01-01' " +
+                        "JOIN salaries s ON e.emp_no = s.emp_no AND s.to_date = '9999-01-01' " +
+                        "WHERE t.title = ?";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, role);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt("cnt") > 0) {
+                    System.out.println("=== Salary Report for Role: " + role + " ===");
+                    System.out.println("Count  : " + rs.getInt("cnt"));
+                    System.out.printf("Average: %.2f%n", rs.getDouble("avg_salary"));
+                    System.out.println("Min    : " + rs.getInt("min_salary"));
+                    System.out.println("Max    : " + rs.getInt("max_salary"));
+                    System.out.println("Total  : " + rs.getLong("total_salary"));
+                    System.out.println("==============================================");
+                } else {
+                    System.out.println("No current employees found for role: " + role);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to produce role salary report: " + e.getMessage());
         }
     }
     /**
