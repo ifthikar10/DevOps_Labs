@@ -31,7 +31,7 @@ public class App
         a.salaryReportByDepartment("Sales");
 
         // Test salary report for manager
-        a.salaryReportForManager(110000);
+        a.salaryReportForManager(110039);
 
         // Disconnect from database
         a.disconnect();
