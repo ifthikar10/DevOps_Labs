@@ -36,22 +36,23 @@ public class App
         a.salaryReportByRole("Engineer");  // or any real role in your DB
 
         // pick a new emp_no automatically
-        int newEmpNo = a.getNextEmpNo();
-        Employee newEmp = new Employee();
-        newEmp.emp_no = newEmpNo;
-        newEmp.first_name = "Test";
-        newEmp.last_name = "Employee";
-        newEmp.birth_date = "1995-05-05";   // optional - method supplies default if null
-        newEmp.gender = "F";                // optional
-        newEmp.hire_date = java.time.LocalDate.now().toString();
+        Employee employee = new Employee();
+        emp.emp_no = 999901;                    // pick a unique emp_no
+        emp.first_name = "TestSimple";
+        emp.last_name = "Insert";
+        emp.birth_date = "1990-01-01";          // required
+        emp.gender = "M";                       // required (M/F)
+        emp.hire_date = java.time.LocalDate.now().toString(); // required
 
-        boolean added = a.addEmployee(newEmp, "d000", "Junior Engineer", 42000);
-        System.out.println("Add employee result: " + added);
-        if (added) {
-            // verify by reading back
-            Employee got = a.getEmployee(newEmpNo);
-            a.displayEmployee(got);
+        boolean ok = a.addEmployeeSimple(emp);
+        System.out.println("Inserted simple employee? " + ok);
+
+        // Optionally verify
+        if (ok) {
+            Employee e2 = a.getEmployee(emp.emp_no);
+            a.displayEmployee(e2); // note: title/salary/dept will be null/absent until you insert them separately
         }
+
 
         // Disconnect from database
         a.disconnect();
@@ -300,65 +301,30 @@ public class App
     }
 
     /**
-     * Add a new employee and optional title, salary, dept assignment.
-     * Returns true on success, false on failure.
+     * Minimal add: insert only the required employees row.
+     * Required columns in the classic schema: emp_no, birth_date, first_name, last_name, gender, hire_date
      *
-     * NOTE: employees table in the classic dataset requires birth_date, gender, hire_date.
-     * This method uses defaults when those fields are null on the Employee object.
+     * Caller must set emp.emp_no, emp.first_name, emp.last_name, emp.birth_date, emp.gender, emp.hire_date.
+     * Returns true on success, false on failure.
      */
-    public boolean addEmployee(Employee emp, String deptNo, String title, int salary) {
-        String insertEmp = "INSERT INTO employees (emp_no, birth_date, first_name, last_name, gender, hire_date) VALUES (?, ?, ?, ?, ?, ?)";
-        String insertTitle = "INSERT INTO titles (emp_no, title, from_date, to_date) VALUES (?, ?, CURDATE(), '9999-01-01')";
-        String insertSalary = "INSERT INTO salaries (emp_no, salary, from_date, to_date) VALUES (?, ?, CURDATE(), '9999-01-01')";
-        String insertDeptEmp = "INSERT INTO dept_emp (emp_no, dept_no, from_date, to_date) VALUES (?, ?, CURDATE(), '9999-01-01')";
-
-        try {
-            con.setAutoCommit(false);
-
-            try (PreparedStatement ps = con.prepareStatement(insertEmp)) {
-                ps.setInt(1, emp.emp_no);
-                ps.setString(2, emp.birth_date != null ? emp.birth_date : "1990-01-01");
-                ps.setString(3, emp.first_name);
-                ps.setString(4, emp.last_name);
-                ps.setString(5, emp.gender != null ? emp.gender : "M");
-                ps.setString(6, emp.hire_date != null ? emp.hire_date : java.time.LocalDate.now().toString());
-                ps.executeUpdate();
-            }
-
-            if (title != null && !title.isEmpty()) {
-                try (PreparedStatement ps = con.prepareStatement(insertTitle)) {
-                    ps.setInt(1, emp.emp_no);
-                    ps.setString(2, title);
-                    ps.executeUpdate();
-                }
-            }
-
-            if (salary > 0) {
-                try (PreparedStatement ps = con.prepareStatement(insertSalary)) {
-                    ps.setInt(1, emp.emp_no);
-                    ps.setInt(2, salary);
-                    ps.executeUpdate();
-                }
-            }
-
-            if (deptNo != null && !deptNo.isEmpty()) {
-                try (PreparedStatement ps = con.prepareStatement(insertDeptEmp)) {
-                    ps.setInt(1, emp.emp_no);
-                    ps.setString(2, deptNo);
-                    ps.executeUpdate();
-                }
-            }
-
-            con.commit();
-            con.setAutoCommit(true);
+    public boolean addEmployeeSimple(Employee emp) {
+        String insertEmp = "INSERT INTO employees (emp_no, birth_date, first_name, last_name, gender, hire_date) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(insertEmp)) {
+            ps.setInt(1, emp.emp_no);
+            ps.setString(2, emp.birth_date);
+            ps.setString(3, emp.first_name);
+            ps.setString(4, emp.last_name);
+            ps.setString(5, emp.gender);
+            ps.setString(6, emp.hire_date);
+            ps.executeUpdate();
             return true;
         } catch (SQLException e) {
-            try { con.rollback(); } catch (SQLException ex) { /* ignore */ }
-            System.out.println("Failed to add employee: " + e.getMessage());
-            try { con.setAutoCommit(true); } catch (SQLException ex) {}
+            System.out.println("Failed to insert employee: " + e.getMessage());
             return false;
         }
     }
+
 
     /**
      * Connect to the MySQL database.
