@@ -53,6 +53,17 @@ public class App
             a.displayEmployee(e2); // note: title/salary/dept will be null/absent until you insert them separately
         }
 
+        // 1) update basic employee fields
+        Employee employee1 = new Employee();
+        emp.emp_no = 999901;                // existing employee you control (test user)
+        emp.first_name = "UpdatedFirst";
+        emp.last_name = "UpdatedLast";
+        emp.birth_date = "1991-02-02";
+        emp.gender = "M";
+        emp.hire_date = "2023-01-01";
+        boolean basicUpdated = a.updateEmployeeSimple(emp);
+        System.out.println("Basic update result: " + basicUpdated);
+
 
         // Disconnect from database
         a.disconnect();
@@ -321,6 +332,29 @@ public class App
             return true;
         } catch (SQLException e) {
             System.out.println("Failed to insert employee: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Minimal update: update identifying fields in employees table.
+     * Updates first_name, last_name, birth_date, gender, hire_date for a given emp_no.
+     * Caller must supply the Employee object with emp_no set and any fields to update.
+     * Returns true on success.
+     */
+    public boolean updateEmployeeSimple(Employee emp) {
+        String sql = "UPDATE employees SET first_name = ?, last_name = ?, birth_date = ?, gender = ?, hire_date = ? WHERE emp_no = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, emp.first_name);
+            ps.setString(2, emp.last_name);
+            ps.setString(3, emp.birth_date);
+            ps.setString(4, emp.gender);
+            ps.setString(5, emp.hire_date);
+            ps.setInt(6, emp.emp_no);
+            int updated = ps.executeUpdate();
+            return updated > 0;
+        } catch (SQLException e) {
+            System.out.println("Failed to update employee: " + e.getMessage());
             return false;
         }
     }
