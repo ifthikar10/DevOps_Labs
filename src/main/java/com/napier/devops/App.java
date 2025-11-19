@@ -35,6 +35,25 @@ public class App
 
         a.salaryReportByRole("Engineer");  // or any real role in your DB
 
+        // pick a new emp_no automatically
+        Employee employee = new Employee();
+        emp.emp_no = 999901;                    // pick a unique emp_no
+        emp.first_name = "TestSimple";
+        emp.last_name = "Insert";
+        emp.birth_date = "1990-01-01";          // required
+        emp.gender = "M";                       // required (M/F)
+        emp.hire_date = java.time.LocalDate.now().toString(); // required
+
+        boolean ok = a.addEmployeeSimple(emp);
+        System.out.println("Inserted simple employee? " + ok);
+
+        // Optionally verify
+        if (ok) {
+            Employee e2 = a.getEmployee(emp.emp_no);
+            a.displayEmployee(e2); // note: title/salary/dept will be null/absent until you insert them separately
+        }
+
+
         // Disconnect from database
         a.disconnect();
     }
@@ -259,6 +278,54 @@ public class App
             System.out.println("Failed to produce role salary report: " + e.getMessage());
         }
     }
+    /**
+     * Get a numeric emp_no candidate (max(emp_no) + 1).
+     * Simple helper to choose a non-colliding emp_no for tests.
+     */
+    public int getNextEmpNo() {
+        String sql = "SELECT MAX(emp_no) AS max_emp FROM employees";
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                int max = rs.getInt("max_emp");
+                return max + 1;
+            } else {
+                // fallback if table empty
+                return 100000;
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to get next emp_no: " + e.getMessage());
+            // pick a safe default
+            return 100000;
+        }
+    }
+
+    /**
+     * Minimal add: insert only the required employees row.
+     * Required columns in the classic schema: emp_no, birth_date, first_name, last_name, gender, hire_date
+     *
+     * Caller must set emp.emp_no, emp.first_name, emp.last_name, emp.birth_date, emp.gender, emp.hire_date.
+     * Returns true on success, false on failure.
+     */
+    public boolean addEmployeeSimple(Employee emp) {
+        String insertEmp = "INSERT INTO employees (emp_no, birth_date, first_name, last_name, gender, hire_date) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(insertEmp)) {
+            ps.setInt(1, emp.emp_no);
+            ps.setString(2, emp.birth_date);
+            ps.setString(3, emp.first_name);
+            ps.setString(4, emp.last_name);
+            ps.setString(5, emp.gender);
+            ps.setString(6, emp.hire_date);
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Failed to insert employee: " + e.getMessage());
+            return false;
+        }
+    }
+
+
     /**
      * Connect to the MySQL database.
      */

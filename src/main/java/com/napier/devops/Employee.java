@@ -26,4 +26,7 @@ public class Employee
 
     //Employee's manager
     public String manager;
+    public String birth_date;
+    public String gender;
+    public String hire_date;
 }
