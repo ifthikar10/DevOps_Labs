@@ -53,7 +53,7 @@ public class App
             a.displayEmployee(e2); // note: title/salary/dept will be null/absent until you insert them separately
         }
 
-        // 1) update basic employee fields
+        // update basic employee fields
         Employee employee1 = new Employee();
         emp.emp_no = 999901;                // existing employee you control (test user)
         emp.first_name = "UpdatedFirst";
@@ -64,6 +64,9 @@ public class App
         boolean basicUpdated = a.updateEmployeeSimple(emp);
         System.out.println("Basic update result: " + basicUpdated);
 
+        //Delete emp
+        boolean deleted = a.deleteEmployeeHard(999901);
+        System.out.println("Hard delete result: " + deleted);
 
         // Disconnect from database
         a.disconnect();
@@ -358,6 +361,54 @@ public class App
             return false;
         }
     }
+
+    /**
+     * Hard delete an employee and all related rows.
+     * This permanently removes the employee from the database.
+     */
+    public boolean deleteEmployeeHard(int empNo) {
+        String deleteDeptEmp = "DELETE FROM dept_emp WHERE emp_no = ?";
+        String deleteDeptManager = "DELETE FROM dept_manager WHERE emp_no = ?";
+        String deleteTitles = "DELETE FROM titles WHERE emp_no = ?";
+        String deleteSalaries = "DELETE FROM salaries WHERE emp_no = ?";
+        String deleteEmp = "DELETE FROM employees WHERE emp_no = ?";
+
+        try {
+            con.setAutoCommit(false);
+
+            try (PreparedStatement ps = con.prepareStatement(deleteDeptEmp)) {
+                ps.setInt(1, empNo);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = con.prepareStatement(deleteDeptManager)) {
+                ps.setInt(1, empNo);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = con.prepareStatement(deleteTitles)) {
+                ps.setInt(1, empNo);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = con.prepareStatement(deleteSalaries)) {
+                ps.setInt(1, empNo);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = con.prepareStatement(deleteEmp)) {
+                ps.setInt(1, empNo);
+                int rows = ps.executeUpdate();   // should delete 1 row
+                con.commit();
+                con.setAutoCommit(true);
+                return rows > 0;                  // true = deleted
+            }
+
+        } catch (SQLException e) {
+            try { con.rollback(); } catch (SQLException ex) {}
+            System.out.println("Failed to delete employee: " + e.getMessage());
+            try { con.setAutoCommit(true); } catch (SQLException ex) {}
+            return false;
+        }
+    }
+
+
 
 
     /**
