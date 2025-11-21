@@ -1,0 +1,47 @@
+@startuml
+
+title HR System – Complete Use Case Diagram
+
+actor HR as "HR Advisor"
+actor Manager as "Department Manager"
+actor Finance as "Finance Department"
+
+rectangle "HR System" {
+
+    ' === USE CASES ===
+
+    usecase UC1 as "View Employee\nProfile Details"
+    usecase UC2 as "Salary Report:\nAll Employees"
+    usecase UC3 as "Salary Report:\nBy Department"
+    usecase UC4 as "Salary Report:\nManager’s Department"
+    usecase UC5 as "Salary Report:\nBy Role/Title"
+    usecase UC6 as "Add New Employee"
+    usecase UC7 as "View Employee\nDetails for Promotion"
+    usecase UC8 as "Update Employee\nDetails"
+    usecase UC9 as "Delete /\nAnonymize Employee"
+
+    ' === ACTOR CONNECTIONS ===
+
+    ' HR Advisor connections
+    HR --> UC1
+    HR --> UC2
+    HR --> UC3
+    HR --> UC5
+    HR --> UC6
+    HR --> UC7
+    HR --> UC8
+    HR --> UC9
+
+    ' Department Manager connections
+    Manager --> UC1
+    Manager --> UC3
+    Manager --> UC4
+
+    ' Finance connections
+    Finance --> UC2
+    Finance --> UC3
+    Finance --> UC4
+    Finance --> UC5
+}
+
+@enduml
